@@ -20,7 +20,6 @@ import { act } from "react-dom/test-utils";
 import { ClientWidgetApi, MatrixWidgetType } from "matrix-widget-api";
 import { mocked } from "jest-mock";
 
-import "../../../skinned-sdk";
 import { stubClient, mkStubRoom } from "../../../test-utils";
 import RoomTile from "../../../../src/components/views/rooms/RoomTile";
 import SettingsStore from "../../../../src/settings/SettingsStore";

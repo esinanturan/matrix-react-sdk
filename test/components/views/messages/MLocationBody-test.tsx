@@ -30,7 +30,6 @@ import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import maplibregl from 'maplibre-gl';
 import { logger } from 'matrix-js-sdk/src/logger';
 
-import sdk from "../../../skinned-sdk";
 import MLocationBody, {
     createMapSiteLink,
     isSelfLocation,
@@ -51,7 +50,6 @@ function nextId(): string {
     EVENT_ID++;
     return EVENT_ID.toString();
 }
-sdk.getComponent("views.messages.MLocationBody");
 
 describe("MLocationBody", () => {
     describe("parseGeoUri", () => {

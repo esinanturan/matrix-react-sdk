@@ -19,7 +19,6 @@ import { act } from 'react-dom/test-utils';
 import { mount } from 'enzyme';
 import { Room, Beacon, BeaconEvent } from 'matrix-js-sdk/src/matrix';
 
-import '../../../skinned-sdk';
 import RoomLiveShareWarning from '../../../../src/components/views/beacon/RoomLiveShareWarning';
 import { OwnBeaconStore } from '../../../../src/stores/OwnBeaconStore';
 import {
