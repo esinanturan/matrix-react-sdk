@@ -53,7 +53,6 @@ import IconizedContextMenu, {
     IconizedContextMenuRadio,
 } from "../context_menus/IconizedContextMenu";
 import VoiceChannelStore, { VoiceChannelEvent, IJitsiParticipant } from "../../../stores/VoiceChannelStore";
-import { replaceableComponent } from "../../../utils/replaceableComponent";
 import PosthogTrackers from "../../../PosthogTrackers";
 import { ViewRoomPayload } from "../../../dispatcher/payloads/ViewRoomPayload";
 import { KeyBindingAction } from "../../../accessibility/KeyboardShortcuts";
@@ -93,7 +92,6 @@ export const contextMenuBelow = (elementRect: PartialDOMRect) => {
     return { left, top, chevronFace };
 };
 
-@replaceableComponent("views.rooms.RoomTile")
 export default class RoomTile extends React.PureComponent<IProps, IState> {
     private dispatcherRef: string;
     private roomTileRef = createRef<HTMLDivElement>();
