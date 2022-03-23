@@ -79,18 +79,56 @@ const INITIAL_STATE = {
     wasContextSwitch: false,
 };
 
+type Listener = (isActive: boolean) => void;
+
 /**
  * A class for storing application state for RoomView. This is the RoomView's interface
 *  with a subset of the js-sdk.
  *  ```
  */
 export class RoomViewStore extends Store<ActionPayload> {
-    public static readonly instance = new RoomViewStore();
+    // While we'd love to just support a regular `public static readonly instance`
+    // field for the instance, the reality is that this particular store is tied
+    // into so many places that we need to defer creation into a function (like a
+    // getter) so the whole class doesn't become an undefined object by module
+    // resolution.
+    private static _instance: RoomViewStore;
+    public static get instance(): RoomViewStore {
+        if (!RoomViewStore._instance) RoomViewStore._instance = new RoomViewStore();
+        return RoomViewStore._instance;
+    }
 
     private state = INITIAL_STATE; // initialize state
 
+    // Keep these out of state to avoid causing excessive/recursive updates
+    private roomIdActivityListeners: Record<string, Listener[]> = {};
+
     public constructor() {
         super(dis);
+    }
+
+    public addRoomListener(roomId: string, fn: Listener) {
+        if (!this.roomIdActivityListeners[roomId]) this.roomIdActivityListeners[roomId] = [];
+        this.roomIdActivityListeners[roomId].push(fn);
+    }
+
+    public removeRoomListener(roomId: string, fn: Listener) {
+        if (this.roomIdActivityListeners[roomId]) {
+            const i = this.roomIdActivityListeners[roomId].indexOf(fn);
+            if (i > -1) {
+                this.roomIdActivityListeners[roomId].splice(i, 1);
+            }
+        } else {
+            logger.warn("Unregistering unrecognised listener (roomId=" + roomId + ")");
+        }
+    }
+
+    private emitForRoom(roomId: string, isActive: boolean) {
+        if (!this.roomIdActivityListeners[roomId]) return;
+
+        for (const fn of this.roomIdActivityListeners[roomId]) {
+            fn.call(null, isActive);
+        }
     }
 
     private setState(newState: Partial<typeof INITIAL_STATE>) {
@@ -108,7 +146,13 @@ export class RoomViewStore extends Store<ActionPayload> {
             return;
         }
 
+        const lastRoomId = this.state.roomId;
         this.state = Object.assign(this.state, newState);
+        if (lastRoomId !== this.state.roomId) {
+            if (lastRoomId) this.emitForRoom(lastRoomId, false);
+            if (this.state.roomId) this.emitForRoom(this.state.roomId, true);
+        }
+
         this.__emitChange();
     }
 
