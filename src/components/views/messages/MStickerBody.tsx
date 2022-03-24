@@ -17,7 +17,7 @@ limitations under the License.
 import React from 'react';
 
 import MImageBody from './MImageBody';
-import { BLURHASH_FIELD } from "../../../ContentMessages";
+import { BLURHASH_FIELD } from "../../../blurhash";
 import Tooltip from "../elements/Tooltip";
 
 export default class MStickerBody extends MImageBody {

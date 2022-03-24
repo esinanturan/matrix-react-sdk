@@ -49,6 +49,7 @@ import { addReplyToMessageContent } from "./utils/Reply";
 import ErrorDialog from "./components/views/dialogs/ErrorDialog";
 import UploadFailureDialog from "./components/views/dialogs/UploadFailureDialog";
 import UploadConfirmDialog from "./components/views/dialogs/UploadConfirmDialog";
+import { BLURHASH_FIELD } from "./blurhash";
 
 const MAX_WIDTH = 800;
 const MAX_HEIGHT = 600;
@@ -56,8 +57,6 @@ const MAX_HEIGHT = 600;
 // scraped out of a macOS hidpi (5660ppm) screenshot png
 //                  5669 px (x-axis)      , 5669 px (y-axis)      , per metre
 const PHYS_HIDPI = [0x00, 0x00, 0x16, 0x25, 0x00, 0x00, 0x16, 0x25, 0x01];
-
-export const BLURHASH_FIELD = "xyz.amorgan.blurhash"; // MSC2448
 
 export class UploadCanceledError extends Error {}
 
