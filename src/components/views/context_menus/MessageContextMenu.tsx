@@ -34,7 +34,6 @@ import { isContentActionable } from '../../../utils/EventUtils';
 import IconizedContextMenu, { IconizedContextMenuOption, IconizedContextMenuOptionList } from './IconizedContextMenu';
 import { ReadPinsEventId } from "../right_panel/types";
 import { Action } from "../../../dispatcher/actions";
-import ReportEventDialog from '../dialogs/ReportEventDialog';
 import ViewSource from '../../structures/ViewSource';
 import { createRedactEventDialog } from '../dialogs/ConfirmRedactDialog';
 import ShareDialog from '../dialogs/ShareDialog';
@@ -48,6 +47,7 @@ import { isPollEnded } from '../messages/MPollBody';
 import { createMapSiteLink } from "../messages/MLocationBody";
 import { ViewRoomPayload } from "../../../dispatcher/payloads/ViewRoomPayload";
 import { OpenForwardDialogPayload } from "../../../dispatcher/payloads/OpenForwardDialogPayload";
+import { OpenReportEventDialogPayload } from "../../../dispatcher/payloads/OpenReportEventDialogPayload";
 
 export function canCancel(status: EventStatus): boolean {
     return status === EventStatus.QUEUED || status === EventStatus.NOT_SENT || status === EventStatus.ENCRYPTING;
@@ -154,9 +154,10 @@ export default class MessageContextMenu extends React.Component<IProps, IState> 
     };
 
     private onReportEventClick = (): void => {
-        Modal.createTrackedDialog('Report Event', '', ReportEventDialog, {
-            mxEvent: this.props.mxEvent,
-        }, 'mx_Dialog_reportEvent');
+        dis.dispatch({
+            action: Action.OpenReportEventDialog,
+            event: this.props.mxEvent,
+        } as OpenReportEventDialogPayload);
         this.closeMenu();
     };
 
