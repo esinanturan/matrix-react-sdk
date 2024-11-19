@@ -17,7 +17,7 @@ limitations under the License.
 
 import React, { JSX, useCallback, useState } from "react";
 import { EventTimeline, EventType, MatrixEvent, Room } from "matrix-js-sdk/src/matrix";
-import { IconButton, Menu, MenuItem, Separator, Text } from "@vector-im/compound-web";
+import { IconButton, Menu, MenuItem, Separator, Tooltip } from "@vector-im/compound-web";
 import { Icon as ViewIcon } from "@vector-im/compound-design-tokens/icons/visibility-on.svg";
 import { Icon as UnpinIcon } from "@vector-im/compound-design-tokens/icons/unpin.svg";
 import { Icon as ForwardIcon } from "@vector-im/compound-design-tokens/icons/forward.svg";
@@ -41,6 +41,8 @@ import { getForwardableEvent } from "../../../events";
 import { OpenForwardDialogPayload } from "../../../dispatcher/payloads/OpenForwardDialogPayload";
 import { createRedactEventDialog } from "../dialogs/ConfirmRedactDialog";
 import { ShowThreadPayload } from "../../../dispatcher/payloads/ShowThreadPayload";
+import PinningUtils from "../../../utils/PinningUtils.ts";
+import PosthogTrackers from "../../../PosthogTrackers.ts";
 
 const AVATAR_SIZE = "32px";
 
@@ -86,13 +88,11 @@ export function PinnedEventTile({ event, room, permalinkCreator }: PinnedEventTi
             </div>
             <div className="mx_PinnedEventTile_wrapper">
                 <div className="mx_PinnedEventTile_top">
-                    <Text
-                        weight="semibold"
-                        className={classNames("mx_PinnedEventTile_sender", getUserNameColorClass(sender))}
-                        as="span"
-                    >
-                        {event.sender?.name || sender}
-                    </Text>
+                    <Tooltip label={event.sender?.name || sender}>
+                        <span className={classNames("mx_PinnedEventTile_sender", getUserNameColorClass(sender))}>
+                            {event.sender?.name || sender}
+                        </span>
+                    </Tooltip>
                     <PinMenu event={event} room={room} permalinkCreator={permalinkCreator} />
                 </div>
                 <MessageEvent
@@ -153,6 +153,8 @@ function PinMenu({ event, room, permalinkCreator }: PinMenuProps): JSX.Element {
      * View the event in the timeline.
      */
     const onViewInTimeline = useCallback(() => {
+        PosthogTrackers.trackInteraction("PinnedMessageListViewTimeline");
+
         dis.dispatch<ViewRoomPayload>({
             action: Action.ViewRoom,
             event_id: event.getId(),
@@ -164,30 +166,18 @@ function PinMenu({ event, room, permalinkCreator }: PinMenuProps): JSX.Element {
 
     /**
      * Whether the client can unpin the event.
-     * Pin and unpin are using the same permission.
+     * If the room state change, we want to check again the permission
      */
-    const canUnpin = useRoomState(room, (state) =>
-        state.mayClientSendStateEvent(EventType.RoomPinnedEvents, matrixClient),
-    );
+    const canUnpin = useRoomState(room, () => PinningUtils.canUnpin(matrixClient, event));
 
     /**
      * Unpin the event.
      * @param event
      */
     const onUnpin = useCallback(async (): Promise<void> => {
-        const pinnedEvents = room
-            .getLiveTimeline()
-            .getState(EventTimeline.FORWARDS)
-            ?.getStateEvents(EventType.RoomPinnedEvents, "");
-        if (pinnedEvents?.getContent()?.pinned) {
-            const pinned = pinnedEvents.getContent().pinned;
-            const index = pinned.indexOf(event.getId());
-            if (index !== -1) {
-                pinned.splice(index, 1);
-                await matrixClient.sendStateEvent(room.roomId, EventType.RoomPinnedEvents, { pinned }, "");
-            }
-        }
-    }, [event, room, matrixClient]);
+        await PinningUtils.pinOrUnpinEvent(matrixClient, event);
+        PosthogTrackers.trackPinUnpinMessage("Unpin", "MessagePinningList");
+    }, [event, matrixClient]);
 
     const contentActionable = isContentActionable(event);
     // Get the forwardable event for the given event

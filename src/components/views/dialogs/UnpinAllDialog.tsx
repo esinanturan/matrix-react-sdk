@@ -16,11 +16,13 @@
 
 import React, { JSX } from "react";
 import { Button, Text } from "@vector-im/compound-web";
-import { EventType, MatrixClient } from "matrix-js-sdk/src/matrix";
+import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import BaseDialog from "../dialogs/BaseDialog";
 import { _t } from "../../../languageHandler";
+import PinningUtils from "../../../utils/PinningUtils.ts";
+import PosthogTrackers from "../../../PosthogTrackers.ts";
 
 /**
  * Properties for {@link UnpinAllDialog}.
@@ -59,7 +61,8 @@ export function UnpinAllDialog({ matrixClient, roomId, onFinished }: UnpinAllDia
                     destructive={true}
                     onClick={async () => {
                         try {
-                            await matrixClient.sendStateEvent(roomId, EventType.RoomPinnedEvents, { pinned: [] }, "");
+                            await PinningUtils.unpinAllEvents(matrixClient, roomId);
+                            PosthogTrackers.trackPinUnpinMessage("Unpin", "UnpinAll");
                         } catch (e) {
                             logger.error("Failed to unpin all events:", e);
                         }

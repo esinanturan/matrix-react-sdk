@@ -60,6 +60,7 @@ import { getShareableLocationEvent } from "../../../events/location/getShareable
 import { ShowThreadPayload } from "../../../dispatcher/payloads/ShowThreadPayload";
 import { CardContext } from "../right_panel/context";
 import PinningUtils from "../../../utils/PinningUtils";
+import PosthogTrackers from "../../../PosthogTrackers.ts";
 
 interface IReplyInThreadButton {
     mxEvent: MatrixEvent;
@@ -177,7 +178,7 @@ export default class MessageContextMenu extends React.Component<IProps, IState> 
             this.props.mxEvent.getType() !== EventType.RoomServerAcl &&
             this.props.mxEvent.getType() !== EventType.RoomEncryption;
 
-        const canPin = PinningUtils.canPinOrUnpin(cli, this.props.mxEvent);
+        const canPin = PinningUtils.canPin(cli, this.props.mxEvent) || PinningUtils.canUnpin(cli, this.props.mxEvent);
 
         this.setState({ canRedact, canPin });
     };
@@ -243,9 +244,11 @@ export default class MessageContextMenu extends React.Component<IProps, IState> 
         this.closeMenu();
     };
 
-    private onPinClick = (): void => {
+    private onPinClick = (isPinned: boolean): void => {
         // Pin or unpin in background
         PinningUtils.pinOrUnpinEvent(MatrixClientPeg.safeGet(), this.props.mxEvent);
+        PosthogTrackers.trackPinUnpinMessage(isPinned ? "Pin" : "Unpin", "Timeline");
+
         this.closeMenu();
     };
 
@@ -618,7 +621,7 @@ export default class MessageContextMenu extends React.Component<IProps, IState> 
                 <IconizedContextMenuOption
                     iconClassName={isPinned ? "mx_MessageContextMenu_iconUnpin" : "mx_MessageContextMenu_iconPin"}
                     label={isPinned ? _t("action|unpin") : _t("action|pin")}
-                    onClick={this.onPinClick}
+                    onClick={() => this.onPinClick(isPinned)}
                 />
             );
         }
